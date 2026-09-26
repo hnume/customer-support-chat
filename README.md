@@ -14,11 +14,11 @@
 npm install
 cp .env.example .env        # Windows PowerShell: copy .env.example .env
 npm run db:up               # เปิด PostgreSQL ใน Docker
-npm run dev                 # สร้างตารางอัตโนมัติ แล้วเปิดเซิร์ฟเวอร์ที่ http://localhost:3000
+npm run dev                 # สร้างตารางอัตโนมัติ แล้วเปิดเซิร์ฟเวอร์ที่ http://localhost:3001
 ```
 
-- หน้าลูกค้า: http://localhost:3000/
-- Agent Dashboard: http://localhost:3000/agent.html
+- หน้าลูกค้า: http://localhost:3001/
+- Agent Dashboard: http://localhost:3001/agent.html
 
 ทดสอบ SLA / escalate แบบเร็ว: ตั้ง `SLA_DEMO=1` ใน `.env` (นาที → วินาที)
 
