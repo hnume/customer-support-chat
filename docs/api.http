@@ -1,0 +1,91 @@
+# ============================================================
+# ทดสอบ API — เปิดไฟล์นี้ใน VS Code (ติดตั้ง extension "REST Client")
+# แล้วกด "Send Request" เหนือแต่ละ request
+# ============================================================
+@base = http://localhost:3001/api
+@agent = a1
+
+### ---------- ข้อมูลทั่วไป ----------
+GET {{base}}/agents
+
+###
+GET {{base}}/sla-policy
+
+###
+GET {{base}}/stats
+
+### ---------- ลูกค้า ----------
+# ลูกค้าแจ้งปัญหา (copy ค่า "id" จากผลลัพธ์ไปใส่ @ticketId ด้านล่าง)
+POST {{base}}/tickets
+Content-Type: application/json
+
+{
+  "name": "คุณเอ",
+  "email": "a@example.com",
+  "subject": "เข้าสู่ระบบไม่ได้",
+  "message": "กดล็อกอินแล้วขึ้น error 500",
+  "priority": "high",
+  "category": "technical",
+  "channel": "web"
+}
+
+###
+@ticketId = ใส่-id-ของ-ticket-ตรงนี้
+
+GET {{base}}/public/tickets/{{ticketId}}
+
+###
+POST {{base}}/public/tickets/{{ticketId}}/messages
+Content-Type: application/json
+
+{ "text": "ยังเข้าไม่ได้ครับ" }
+
+### Email webhook (อีเมลเข้า → สร้าง ticket)
+POST {{base}}/inbound/email
+Content-Type: application/json
+
+{ "from": "b@example.com", "name": "คุณบี", "subject": "บิลผิด", "body": "ยอดเงินไม่ตรง" }
+
+### ---------- Agent (ต้องมี header x-agent-id) ----------
+GET {{base}}/tickets
+x-agent-id: {{agent}}
+
+###
+GET {{base}}/tickets?status=open&q=login
+x-agent-id: {{agent}}
+
+### ดู ticket ด้วยเลข TK ก็ได้
+GET {{base}}/tickets/TK-1001
+x-agent-id: {{agent}}
+
+###
+POST {{base}}/tickets/TK-1001/messages
+x-agent-id: {{agent}}
+Content-Type: application/json
+
+{ "text": "ลองล้าง cache แล้วเข้าใหม่ได้ไหมครับ", "internal": false }
+
+### เปลี่ยนสถานะ / priority / ผู้รับผิดชอบ
+PATCH {{base}}/tickets/TK-1001
+x-agent-id: {{agent}}
+Content-Type: application/json
+
+{ "status": "pending", "priority": "urgent", "assigneeId": "a2" }
+
+###
+POST {{base}}/tickets/TK-1001/escalate
+x-agent-id: {{agent}}
+Content-Type: application/json
+
+{ "reason": "ต้องการผู้เชี่ยวชาญ L2" }
+
+### ---------- Team chat ----------
+GET {{base}}/conversations
+x-agent-id: {{agent}}
+
+###
+POST {{base}}/conversations
+x-agent-id: {{agent}}
+Content-Type: application/json
+
+{ "type": "group", "name": "ทีม L1", "memberIds": ["a2", "a3"] }
