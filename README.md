@@ -116,6 +116,8 @@ Notification (Socket.IO toast / Email) + Analytics
 
 ## โครงสร้างไฟล์
 
+แผนภาพ package dependency ของ backend: [docs/backend-dependencies.md](docs/backend-dependencies.md)
+
 ```
 server.js          REST API + Socket.IO + business logic
 src/store.js       Data layer (JSON file: data/db.json) — เปลี่ยนเป็น DB จริงได้ที่ไฟล์นี้ไฟล์เดียว
