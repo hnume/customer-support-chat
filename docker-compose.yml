@@ -1,0 +1,21 @@
+# PostgreSQL สำหรับพัฒนา — เชื่อม TablePlus ได้ที่ localhost:5432
+# user: support / password: support / database: support_chat
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: support-chat-db
+    environment:
+      POSTGRES_USER: support
+      POSTGRES_PASSWORD: support
+      POSTGRES_DB: support_chat
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U support -d support_chat"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata:

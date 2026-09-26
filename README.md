@@ -1,66 +1,122 @@
 # Customer Support Chat System
 
-ระบบบริการลูกค้าแบบ real-time: ลูกค้าแจ้งปัญหา → สร้าง Ticket → กระจายงานให้ Agent → Agent ตอบ / เปลี่ยนสถานะ / assign / escalate เมื่อใกล้ผิด SLA
-พร้อมระบบแชทที่มีสถานะข้อความ **sent / delivered / read**, ส่งหาคนที่ **offline** ได้ และ **Team chat แบบ 1:1 และ Group**
+ระบบบริการลูกค้าแบบ real-time เขียนด้วย **TypeScript** แบ่งโค้ดเป็น layer และเก็บข้อมูลใน **PostgreSQL**
+
+- ลูกค้าแจ้งปัญหาผ่าน Web / Mobile / Email / Chat → ระบบสร้าง Ticket → auto-assign ให้ Agent
+- Agent ตอบแชท, เปลี่ยนสถานะ, assign, escalate · SLA เตือนและ escalate อัตโนมัติ
+- สถานะข้อความ sent / delivered / read · ส่งหาคนที่ offline ได้ · Team chat แบบ 1:1 และ Group
 
 ## วิธีรัน
 
+ต้องมี **Node.js 20+** และ **Docker Desktop**
+
 ```bash
 npm install
-npm start                 # http://localhost:3000
+cp .env.example .env        # Windows PowerShell: copy .env.example .env
+npm run db:up               # เปิด PostgreSQL ใน Docker
+npm run dev                 # สร้างตารางอัตโนมัติ แล้วเปิดเซิร์ฟเวอร์ที่ http://localhost:3000
 ```
 
 - หน้าลูกค้า: http://localhost:3000/
-- Agent Dashboard: http://localhost:3000/agent.html (เปิดหลายแท็บแล้ว login คนละ agent เพื่อทดสอบ)
+- Agent Dashboard: http://localhost:3000/agent.html
 
-ทดสอบ SLA / escalate แบบเร็ว (เปลี่ยนหน่วยนาทีเป็นวินาที):
+ทดสอบ SLA / escalate แบบเร็ว: ตั้ง `SLA_DEMO=1` ใน `.env` (นาที → วินาที)
 
-```bash
-# macOS / Linux
-SLA_DEMO=1 npm start
-# Windows PowerShell
-$env:SLA_DEMO=1; npm start
-```
-
-## Flow
-
-```
-Customer
-   │ Submit issue
-   ▼
-Support Channel (Web / Mobile / Email / Chat)
-   │
-   ▼
-Ticket Management ──► Auto-assign (agent ที่ online และมีงานน้อยสุด)
-   │                        │
-   │                        ▼
-   │                  Customer Support Agent
-   │                   ├─ ตอบลูกค้า (realtime) / Internal note
-   │                   ├─ เปลี่ยนสถานะ open → in_progress → pending → resolved → closed
-   │                   ├─ assign ให้คนอื่น
-   │                   └─ escalate → Supervisor (L2)
-   ▼
-SLA Watcher ── เหลือ < 20% → เตือน ── เกินเวลา → escalate อัตโนมัติ + เพิ่ม priority
-   ▼
-Notification (Socket.IO toast / Email) + Analytics
-```
-
-## ฟีเจอร์
-
-| กลุ่ม | รายละเอียด |
+| คำสั่ง | ใช้ทำอะไร |
 |---|---|
-| Ticket | สร้างเลข `TK-xxxx`, หมวดหมู่, priority, สถานะ, timeline ของทุก event |
-| Channel | Web / Mobile / Chat จากฟอร์ม, Email ผ่าน webhook `/api/inbound/email` (ตอบอีเมลที่หัวข้อมี `[TK-xxxx]` จะต่อเข้า ticket เดิม) |
-| Assign | Auto-assign แบบ least-load, รับงานเอง, โอนงาน |
-| SLA | ตอบครั้งแรก / แก้ไขเสร็จ แยกตาม priority, หยุดนับตอน `pending`, เริ่มรอบใหม่หลัง escalate |
-| Escalation | Manual หรืออัตโนมัติเมื่อผิด SLA → ส่งให้ Supervisor + เพิ่ม priority |
-| Chat | Realtime, typing indicator, internal note (ลูกค้าไม่เห็น), ลูกค้าตอบ ticket ที่ปิดแล้ว = เปิดใหม่ |
-| สถานะข้อความ | ✓ sent → ✓✓ delivered (ผู้รับได้รับ) → ✓✓ read (ผู้รับเปิดอ่าน) |
-| Offline | ข้อความถูกเก็บไว้ เมื่ออีกฝ่ายกลับมา online จะได้รับและสถานะเปลี่ยนเป็น delivered |
-| Team chat | แชท 1:1 (ไม่สร้างห้องซ้ำ), Group chat + เพิ่ม/ลบสมาชิก, แสดงจำนวนคนอ่าน (เช่น 2/3), ประวัติย้อนหลัง |
-| Analytics | `/api/stats` |
+| `npm run dev` | รันแบบพัฒนา (แก้โค้ดแล้วรีสตาร์ตเอง) |
+| `npm run build` / `npm start` | build เป็น JavaScript แล้วรันแบบ production |
+| `npm run db:up` / `npm run db:down` | เปิด / ปิด PostgreSQL ใน Docker |
+| `npm run db:migrate` | สร้าง / อัปเดตตารางโดยไม่เปิดเซิร์ฟเวอร์ |
+| `npm test` | รัน test ทั้งหมด (ใช้ PostgreSQL in-memory ไม่ต้องเปิด Docker) |
+| `npm run lint:layers` | ตรวจว่าไม่มีการ import ย้อน layer |
+| `npm run typecheck` | ตรวจ type |
 
-## SLA Policy (นาที) — แก้ได้ที่ `src/sla.js`
+## ดูข้อมูลด้วย TablePlus
+
+Create a new connection → **PostgreSQL** แล้วใส่ค่าตาม `docker-compose.yml`:
+
+| ช่อง | ค่า |
+|---|---|
+| Host | `localhost` |
+| Port | `5432` |
+| User | `support` |
+| Password | `support` |
+| Database | `support_chat` |
+
+ตารางที่จะเห็น: `agents`, `customers`, `tickets`, `ticket_messages`, `ticket_events`, `conversations`, `conversation_members`, `conversation_messages`, `message_receipts`, `schema_migrations`
+
+ตัวอย่าง SQL สำหรับตอบ Business questions (วางใน TablePlus ได้เลย):
+
+```sql
+-- ข้อความต่อวัน
+SELECT created_at::date AS day, COUNT(*) FROM ticket_messages WHERE NOT internal GROUP BY 1 ORDER BY 1;
+
+-- delivery latency / เวลาก่อนอ่าน เฉลี่ย (วินาที)
+SELECT AVG(EXTRACT(EPOCH FROM delivered_at - created_at)) AS delivery_sec,
+       AVG(EXTRACT(EPOCH FROM read_at - created_at))      AS read_sec
+FROM ticket_messages WHERE NOT internal;
+
+-- ticket ที่ผิด SLA
+SELECT t.number, t.priority, t.status, e.created_at AS breached_at
+FROM ticket_events e JOIN tickets t ON t.id = e.ticket_id
+WHERE e.type = 'sla_breached' ORDER BY e.created_at DESC;
+
+-- งานค้างของแต่ละ agent
+SELECT a.name, COUNT(t.id) AS open_tickets
+FROM agents a LEFT JOIN tickets t ON t.assignee_id = a.id AND t.status NOT IN ('resolved', 'closed')
+GROUP BY a.name ORDER BY open_tickets DESC;
+```
+
+## สถาปัตยกรรม (Layered)
+
+```mermaid
+flowchart TB
+  entry["cmd/<br/>server.ts · app.ts · migrate.ts"]
+  api["api/<br/>http routes · socket handlers · socketNotifier"]
+  worker["workers/<br/>slaWatcher"]
+  uc["business/usecases<br/>tickets · conversations · agents · assignment"]
+  ports["business/ports<br/>interfaces"]
+  domain["business/models<br/>Ticket · Conversation · slaPolicy"]
+  repo["repositories/<br/>Pg*Repository (SQL)"]
+  infra["pkg/<br/>db · config · mail · presence"]
+  leaf["pkg/utils<br/>ids · time"]
+
+  entry --> api & worker & uc & repo & infra
+  api --> uc & domain & ports & infra
+  worker --> uc
+  uc --> ports & domain & leaf
+  repo --> ports & domain & infra & leaf
+  infra --> ports & domain & leaf
+  ports --> domain
+  domain --> leaf
+```
+
+กฎ: import ได้เฉพาะทิศทางตามลูกศร ตรวจอัตโนมัติด้วย `npm run lint:layers` (และอยู่ใน `npm test`)
+
+- **business/** ไม่รู้จัก express, socket.io หรือ pg เลย คุยกับโลกภายนอกผ่าน interface ใน `business/ports.ts`
+- **repositories/** implement interface ของ repository ด้วย SQL — เปลี่ยนฐานข้อมูลได้โดยไม่แตะ usecases
+- **api/socket/socketNotifier.ts** implement `Notifier` ด้วย Socket.IO — usecases แค่เรียก `notifier.ticketMessage(...)`
+- **cmd/app.ts** เป็นจุดเดียวที่ประกอบทุก layer เข้าด้วยกัน (dependency injection)
+
+```
+src/
+  cmd/            entry: server.ts, app.ts (composition root), migrate.ts
+  api/http/       express app + routes (public, tickets, conversations, meta)
+  api/socket/     socket handlers + socketNotifier
+  workers/        slaWatcher (ตั้งเวลาอย่างเดียว logic อยู่ใน usecase checkSla)
+  business/
+    models/       types + กฎที่เป็น pure function (slaPolicy, bumpPriority, views)
+    ports.ts      interfaces: repositories, Notifier, Mailer, Presence
+    usecases/     ขั้นตอนทางธุรกิจ
+  repositories/   PostgreSQL implementation
+  pkg/            db (client + migrate), config, mail, presence, utils
+migrations/       SQL schema (รันอัตโนมัติตอนเปิดเซิร์ฟเวอร์)
+public/           หน้าเว็บลูกค้า + Agent Dashboard
+tests/            unit + end-to-end + layer check
+```
+
+## SLA Policy (นาที) — `src/business/models/slaPolicy.ts`
 
 | Priority | ตอบครั้งแรก | แก้ไขเสร็จ |
 |---|---|---|
@@ -69,21 +125,11 @@ Notification (Socket.IO toast / Email) + Analytics
 | normal | 240 | 1440 |
 | low | 1440 | 4320 |
 
-## Business questions → Metrics (`GET /api/stats`)
-
-| คำถาม | ฟิลด์ |
-|---|---|
-| มีข้อความถูกส่งกี่ข้อความต่อวัน? | `messaging.messagesPerDay`, `messaging.messagesToday` |
-| ห้องไหน active? | `messaging.activeConversations` |
-| Message delivery latency เท่าไร? | `messaging.avgDeliveryLatencySec` |
-| กี่ % ที่ยังส่งไม่ถึง? | `messaging.deliveredRate`, `messaging.pendingDelivery` |
-| ผู้ใช้อ่านข้อความหลังได้รับเฉลี่ยกี่วินาที? | `messaging.avgTimeToReadSec` |
-| ทำตาม SLA ได้กี่ %? ตอบครั้งแรกเฉลี่ยกี่นาที? | `slaComplianceRate`, `avgFirstResponseMin` |
-| งานกระจายตัวอย่างไร? | `agentLoad`, `byStatus`, `byChannel`, `byPriority` |
+เหลือเวลา < 20% → เตือน · เกินเวลา → escalate ให้ Supervisor + เพิ่ม priority แล้วเริ่มนับ SLA รอบใหม่ · สถานะ `pending` หยุดนับ
 
 ## REST API
 
-ฝั่ง agent ต้องส่ง header `x-agent-id` (เดโม — production ให้เปลี่ยนเป็น JWT/Keycloak ที่ `requireAgent` ใน `server.js`)
+ฝั่ง agent ต้องส่ง header `x-agent-id` (เดโม — production เปลี่ยนเป็น JWT / Keycloak ที่ `requireAgent` ใน `src/api/http/helpers.ts`)
 
 | Method | Path | ใช้ทำอะไร |
 |---|---|---|
@@ -92,10 +138,11 @@ Notification (Socket.IO toast / Email) + Analytics
 | GET | `/api/public/tickets/:id` | ลูกค้าดู ticket ของตัวเอง |
 | POST | `/api/public/tickets/:id/messages` | ลูกค้าส่งข้อความ |
 | GET | `/api/tickets?status=&assigneeId=&q=` | agent ดูรายการ ticket |
+| GET | `/api/tickets/:id` | รายละเอียด (ใช้ id หรือ TK-xxxx) |
 | POST | `/api/tickets/:id/messages` | agent ตอบ `{text, internal}` |
 | PATCH | `/api/tickets/:id` | เปลี่ยน `status` / `priority` / `assigneeId` |
 | POST | `/api/tickets/:id/escalate` | escalate `{reason}` |
-| GET/POST | `/api/conversations` | รายการห้อง / สร้าง `{type:'direct'|'group', name, memberIds}` |
+| GET/POST | `/api/conversations` | รายการห้อง / สร้าง `{type:'direct'\|'group', name, memberIds}` |
 | GET | `/api/conversations/:id/messages?before=&limit=` | ประวัติการสนทนา |
 | POST | `/api/conversations/:id/messages` | ส่งข้อความ team chat |
 | POST | `/api/conversations/:id/members` | `{add:[], remove:[]}` |
@@ -114,22 +161,9 @@ Notification (Socket.IO toast / Email) + Analytics
 | server → client | `conv:message`, `conv:status`, `conv:updated` | team chat |
 | server → client | `notify`, `agents:presence`, `typing` | แจ้งเตือน / ใคร online / กำลังพิมพ์ |
 
-## โครงสร้างไฟล์
-
-แผนภาพ package dependency ของ backend: [docs/backend-dependencies.md](docs/backend-dependencies.md)
-
-```
-server.js          REST API + Socket.IO + business logic
-src/store.js       Data layer (JSON file: data/db.json) — เปลี่ยนเป็น DB จริงได้ที่ไฟล์นี้ไฟล์เดียว
-src/sla.js         SLA policy, auto-assign, escalation, SLA watcher
-public/index.html  หน้าลูกค้า (ฟอร์ม + แชท)
-public/agent.html  Agent dashboard (Tickets + Team Chat)
-public/js/*.js     Frontend logic
-```
-
-## ต่อยอดสำหรับ production
+## ต่อยอด
 
 - Auth จริง (Keycloak / JWT) แทน `x-agent-id`
-- PostgreSQL + Redis adapter ของ Socket.IO เพื่อรันหลาย instance
-- ต่ออีเมลจริง (SendGrid / SES) ที่ฟังก์ชัน `sendEmail`
-- แนบไฟล์ / รูปภาพ, CSAT หลังปิด ticket, Knowledge base
+- Redis adapter ของ Socket.IO + ย้าย `MemoryPresence` ไป Redis เพื่อรันหลาย instance
+- ส่งอีเมลจริง: เขียน `Mailer` ใหม่ใน `src/pkg/mail/` แล้วเปลี่ยนที่ `cmd/app.ts`
+- ใช้ transaction ครอบขั้นตอนที่เขียนหลายตาราง (เช่น `openTicket`)
