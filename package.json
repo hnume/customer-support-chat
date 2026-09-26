@@ -1,0 +1,14 @@
+{
+  "name": "customer-support-chat-system",
+  "version": "1.0.0",
+  "description": "Customer Support Chat System: Ticket + Real-time Chat + Auto-assign + SLA Escalation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}

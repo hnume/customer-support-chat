@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ติดต่อฝ่ายบริการลูกค้า</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="customer-wrap">
+    <h2 style="margin:0 0 4px">💬 ศูนย์บริการลูกค้า</h2>
+    <p class="muted" style="margin:0 0 16px">แจ้งปัญหา แล้วคุยกับเจ้าหน้าที่ได้ทันที</p>
+
+    <!-- ขั้นที่ 1: ฟอร์มแจ้งปัญหา -->
+    <form id="startForm" class="card">
+      <div class="row">
+        <div><label>ชื่อ</label><input name="name" required placeholder="ชื่อของคุณ" /></div>
+        <div><label>อีเมล</label><input name="email" type="email" required placeholder="you@example.com" /></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>หมวดหมู่</label>
+          <select name="category">
+            <option value="general">สอบถามทั่วไป</option>
+            <option value="billing">การชำระเงิน / บิล</option>
+            <option value="technical">ปัญหาทางเทคนิค</option>
+            <option value="account">บัญชีผู้ใช้</option>
+          </select>
+        </div>
+        <div>
+          <label>ความเร่งด่วน</label>
+          <select name="priority">
+            <option value="low">ต่ำ</option>
+            <option value="normal" selected>ปกติ</option>
+            <option value="high">สูง</option>
+            <option value="urgent">ด่วนมาก</option>
+          </select>
+        </div>
+      </div>
+      <label>ช่องทาง</label>
+      <select name="channel">
+        <option value="web">Web</option>
+        <option value="mobile">Mobile</option>
+        <option value="chat">Chat</option>
+      </select>
+      <label>หัวข้อ</label>
+      <input name="subject" required placeholder="เช่น เข้าสู่ระบบไม่ได้" />
+      <label>รายละเอียด</label>
+      <textarea name="message" rows="4" required placeholder="อธิบายปัญหาที่พบ"></textarea>
+      <p id="formError" class="muted" style="color:var(--danger)"></p>
+      <button class="primary" style="width:100%">เริ่มแชทกับเจ้าหน้าที่</button>
+    </form>
+
+    <!-- ขั้นที่ 2: ห้องแชท -->
+    <div id="chat" class="card chat-card hidden">
+      <div class="chat-head">
+        <div>
+          <b id="tNumber"></b> <span id="tSubject" class="muted"></span>
+          <div class="muted" id="tAgent"></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span id="tStatus" class="badge"></span>
+          <button id="newBtn" title="แจ้งเรื่องใหม่">+ ใหม่</button>
+        </div>
+      </div>
+      <div id="messages" class="messages"></div>
+      <div id="typing" class="typing"></div>
+      <form id="composer" class="composer">
+        <textarea id="text" placeholder="พิมพ์ข้อความ... (Enter เพื่อส่ง)"></textarea>
+        <button class="primary">ส่ง</button>
+      </form>
+    </div>
+
+    <p class="muted" style="text-align:center;margin-top:16px">
+      เจ้าหน้าที่? <a href="/agent.html">เข้าสู่ Agent Dashboard</a>
+    </p>
+  </div>
+  <div id="toasts"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/customer.js"></script>
+</body>
+</html>

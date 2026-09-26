@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- เข้าสู่ระบบ (เดโม: เลือกชื่อ agent) -->
+  <div id="loginView" class="login card">
+    <h2 style="margin-top:0">🎧 Agent Login</h2>
+    <label>เลือกเจ้าหน้าที่</label>
+    <select id="agentSelect"></select>
+    <p class="muted">เดโม: ใช้ชื่อแทนการ login จริง (production เชื่อม Keycloak / JWT)</p>
+    <button id="loginBtn" class="primary" style="width:100%">เข้าสู่ระบบ</button>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="topbar">
+      <h1>🎧 Support Dashboard</h1>
+      <div class="tabs">
+        <button data-tab="tickets" class="tab active">Tickets</button>
+        <button data-tab="team" class="tab">Team Chat <span id="teamUnread" class="unread hidden"></span></button>
+      </div>
+      <span id="me"></span>
+      <button id="logoutBtn">ออก</button>
+    </div>
+    <div id="stats" class="stats"></div>
+
+    <!-- ===== แท็บ Tickets ===== -->
+    <div id="ticketsView" class="layout">
+      <div class="col">
+        <div class="filters">
+          <input id="q" placeholder="🔍 ค้นหาเลข ticket / หัวข้อ / ลูกค้า" />
+          <select id="fStatus">
+            <option value="">ทุกสถานะ</option>
+            <option value="open">เปิดใหม่</option>
+            <option value="in_progress">กำลังดำเนินการ</option>
+            <option value="pending">รอลูกค้า</option>
+            <option value="resolved">แก้ไขแล้ว</option>
+            <option value="closed">ปิด</option>
+          </select>
+          <select id="fMine">
+            <option value="">ทุกคน</option>
+            <option value="mine">ของฉัน</option>
+          </select>
+        </div>
+        <div id="ticketList" class="ticket-list"></div>
+      </div>
+
+      <div class="col">
+        <div id="noTicket" class="empty">เลือก ticket ทางซ้ายเพื่อเริ่มสนทนา</div>
+        <div id="chatPane" class="hidden" style="display:flex;flex-direction:column;height:100%;min-height:0">
+          <div class="chat-head" style="padding:10px 14px;border-bottom:1px solid var(--line)">
+            <div><b id="cNumber"></b> <span id="cSubject"></span><div class="muted" id="cCustomer"></div></div>
+          </div>
+          <div id="messages" class="messages"></div>
+          <div id="typing" class="typing"></div>
+          <form id="composer" class="composer">
+            <textarea id="text" placeholder="ตอบลูกค้า... (Enter ส่ง, Shift+Enter ขึ้นบรรทัดใหม่)"></textarea>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <label style="margin:0;white-space:nowrap"><input type="checkbox" id="internal" style="width:auto" /> Internal</label>
+              <button class="primary">ส่ง</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="col">
+        <div id="details" class="details"><div class="empty">รายละเอียด ticket</div></div>
+      </div>
+    </div>
+
+    <!-- ===== แท็บ Team Chat (1:1 / Group) ===== -->
+    <div id="teamView" class="layout team hidden">
+      <div class="col">
+        <div style="padding:10px;border-bottom:1px solid var(--line);display:flex;gap:6px">
+          <button id="newDirectBtn" style="flex:1">+ แชท 1:1</button>
+          <button id="newGroupBtn" style="flex:1">+ Group</button>
+        </div>
+        <form id="newConvForm" class="hidden" style="padding:10px;border-bottom:1px solid var(--line)">
+          <input type="hidden" name="type" />
+          <div id="groupNameWrap"><label>ชื่อกลุ่ม</label><input name="name" placeholder="เช่น ทีม L1" /></div>
+          <label id="memberLabel">เลือกสมาชิก</label>
+          <div id="memberPicker"></div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="primary" style="flex:1">สร้าง</button>
+            <button type="button" id="cancelConv">ยกเลิก</button>
+          </div>
+        </form>
+        <div id="convList" class="ticket-list"></div>
+      </div>
+      <div class="col">
+        <div id="noConv" class="empty">เลือกห้องแชท หรือสร้างใหม่</div>
+        <div id="convPane" class="hidden" style="display:flex;flex-direction:column;height:100%;min-height:0">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--line)">
+            <b id="convTitle"></b> <div class="muted" id="convMembers"></div>
+          </div>
+          <div id="convMessages" class="messages"></div>
+          <div id="convTyping" class="typing"></div>
+          <form id="convComposer" class="composer">
+            <textarea id="convText" placeholder="พิมพ์ข้อความ... ส่งได้แม้อีกฝ่าย offline"></textarea>
+            <button class="primary">ส่ง</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toasts"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/agent.js"></script>
+</body>
+</html>
