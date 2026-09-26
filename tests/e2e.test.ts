@@ -166,3 +166,24 @@ describe('Customer Support Chat System', () => {
     assert.equal(s.agentLoad.length, 4);
   });
 });
+
+describe('API docs', () => {
+  test('Swagger UI และ OpenAPI spec ครอบคลุมทุก route', async () => {
+    const h = await startTestApp();
+    try {
+      const base = `http://localhost:${(h.app.server.address() as { port: number }).port}`;
+      const html = await (await fetch(`${base}/api/docs/`)).text();
+      assert.match(html, /swagger-ui/);
+      const spec = await h.api('/api/openapi.json');
+      assert.equal(spec.openapi, '3.0.3');
+      const paths = Object.keys(spec.paths).sort();
+      assert.deepEqual(paths, [
+        '/agents', '/conversations', '/conversations/{id}/members', '/conversations/{id}/messages',
+        '/inbound/email', '/public/tickets/{id}', '/public/tickets/{id}/messages', '/sla-policy', '/stats',
+        '/tickets', '/tickets/{id}', '/tickets/{id}/escalate', '/tickets/{id}/messages',
+      ]);
+    } finally {
+      await h.stop();
+    }
+  });
+});

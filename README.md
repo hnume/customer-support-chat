@@ -129,6 +129,9 @@ tests/            unit + end-to-end + layer check
 
 ## REST API
 
+เอกสารแบบกดลองได้ (Swagger UI): **http://localhost:3001/api/docs** — กด **Authorize** ใส่ `a1` แล้วใช้ "Try it out"
+OpenAPI JSON สำหรับ import เข้า Postman / Insomnia: `http://localhost:3001/api/openapi.json` · ไฟล์ตัวอย่าง request: `docs/api.http`
+
 ฝั่ง agent ต้องส่ง header `x-agent-id` (เดโม — production เปลี่ยนเป็น JWT / Keycloak ที่ `requireAgent` ใน `src/api/http/helpers.ts`)
 
 | Method | Path | ใช้ทำอะไร |
