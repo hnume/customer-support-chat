@@ -1,4 +1,4 @@
-# PostgreSQL สำหรับพัฒนา — เชื่อม TablePlus ได้ที่ localhost:5432
+# PostgreSQL สำหรับพัฒนา — เชื่อม TablePlus ได้ที่ localhost:5433
 # user: support / password: support / database: support_chat
 services:
   db:
@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: support
       POSTGRES_DB: support_chat
     ports:
-      - "5432:5432"
+      - "5433:5432"   # ใช้ 5433 เพื่อไม่ชนกับ PostgreSQL ที่ติดตั้งไว้ในเครื่อง
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

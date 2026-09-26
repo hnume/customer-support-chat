@@ -39,7 +39,7 @@ Create a new connection → **PostgreSQL** แล้วใส่ค่าตา�
 | ช่อง | ค่า |
 |---|---|
 | Host | `localhost` |
-| Port | `5432` |
+| Port | `5433` |
 | User | `support` |
 | Password | `support` |
 | Database | `support_chat` |
